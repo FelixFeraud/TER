@@ -71,7 +71,7 @@ def ft_top_k_predict(directory, model, preprocessing_function, csv_output, k=5):
                 csv_file.write(str(index) + ' ')
 
             cpt += 1
-            if (cpt % 100 == 0):
+            if cpt % 100 == 0:
                 print('Predicted', cpt, 'images')
 
 
@@ -86,7 +86,7 @@ def setup_data_generators(directory, image_size, gen_batch_size, model_preproces
     val_gen = val_data_gen.flow_from_directory(directory + 'val/', target_size=image_size, batch_size=gen_batch_size,
                                                class_mode='categorical')
 
-    return (train_gen, val_gen)
+    return train_gen, val_gen
 
 
 def build_tl_model(base_model, top_layers_builder, image_size, nb_classes):
