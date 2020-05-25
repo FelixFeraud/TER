@@ -25,7 +25,7 @@ class ArrayDataGenerator(keras.utils.Sequence):
 
     def on_epoch_end(self):
         self.indexes = np.arange(len(self.id_list))
-        if self.shuffle == True:
+        if self.shuffle:
             np.random.shuffle(self.indexes)
 
     def __len__(self):
