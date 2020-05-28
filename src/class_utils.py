@@ -3,7 +3,9 @@ import os
 import keras
 import numpy as np
 
-
+# Classe ArrayDataGenerator :
+# Permet de charger des tableaux enregistrés au format compressé .npz
+# de la même manière que la classe ImageDataGenerator fournie par Keras.
 class ArrayDataGenerator(keras.utils.Sequence):
     def __init__(self, data_folder, batch_size, input_shape, shuffle=True):
         self.batch_size = batch_size

@@ -15,8 +15,7 @@ def makedirs_if(directory):
         os.makedirs(directory)
 
 
-# Preprocess pour resnet
-
+# Preprocess compact pour resnet
 def img_preprocess(img_path, preprocessing_function, n=224):
     img = load_img(img_path, target_size=(n, n))
     img = img_to_array(img)
@@ -25,7 +24,9 @@ def img_preprocess(img_path, preprocessing_function, n=224):
     return preprocessed_img
 
 
-# Prédictions (top 5) sur les images de test pour l'extraction de features
+# Prédictions (top k, par défaut 5) sur les images de test pour l'extraction de caractéristiques (feature extraction)
+# nécessite de préciser un modèle de base pour que le modèle final fasse ses prédictions sur les caractéristiques extraites.
+# enregistre les résultats au format de la compétition dans un fichier csv au chemin 'csv_output'
 def fe_top_k_predict(directory, base_model, final_model, preprocessing_function, csv_output, k=5):
     img_count = sum([len(files) for r, d, files in os.walk(directory)])
     print('Found', img_count, 'images')
@@ -50,7 +51,7 @@ def fe_top_k_predict(directory, base_model, final_model, preprocessing_function,
             if cpt % 100 == 0:
                 print('Predicted', cpt, 'images')
 
-
+# Prédictions (top k, par défaut 5) sur les images du répertoire 'directory'
 def ft_top_k_predict(directory, model, preprocessing_function, csv_output, k=5):
     img_count = sum([len(files) for r, d, files in os.walk(directory)])
     print('Found', img_count, 'images')
@@ -74,7 +75,8 @@ def ft_top_k_predict(directory, model, preprocessing_function, csv_output, k=5):
             if cpt % 100 == 0:
                 print('Predicted', cpt, 'images')
 
-
+# Renvoie un générateur de données (batchs) pour l'ensemble d'entraînement, et un générateur pour l'ensemble de validation
+# à partir d'un dossier 'directory' spécifié, qui doit contenir les dossier 'train' et 'val'.
 def setup_data_generators(directory, image_size, gen_batch_size, model_preprocessing_function):
     train_data_gen = keras.preprocessing.image.ImageDataGenerator(preprocessing_function=model_preprocessing_function,
                                                                   rotation_range=20, width_shift_range=0.2,
@@ -88,20 +90,21 @@ def setup_data_generators(directory, image_size, gen_batch_size, model_preproces
 
     return train_gen, val_gen
 
-
+# Prend en arguments, un modèle de base (ResNet50, VGG19 ...) et un constructeur de couches qui va rajouter
+# des couches pour le transfer learning sur le modèle de base, et renvoyer le modèle combiné.
 def build_tl_model(base_model, top_layers_builder, image_size, nb_classes):
     inputs = Input(shape=(*image_size, 3))
     outputs = top_layers_builder(base_model(inputs), nb_classes)
     return Model(inputs, outputs)
 
-
+# Gèle les n premières couches, et dégèle les autres.
 def freeze_n_layers(model, n):
     for layer in model.layers:
         layer.trainable = False
     for layer in model.layers[n:]:
         layer.trainable = True
 
-
+# Compile et entraîne le modèle 'model' à partir des générateur 'train_gen' et 'val_gen'
 def train_model(model, train_gen, val_gen, epochs, opt, callbacks=None):
     model.compile(loss='categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
 
@@ -113,7 +116,8 @@ def train_model(model, train_gen, val_gen, epochs, opt, callbacks=None):
                                verbose=1,
                                callbacks=callbacks)
 
-
+# Prend en argument l'histoire d'entraînement renvoyée par train_model et
+# trace la précision et la perte au fil des epochs (en train et en val)
 def plot_acc_loss(history):
     plt.plot(history.history['accuracy'])
     plt.plot(history.history['val_accuracy'])
